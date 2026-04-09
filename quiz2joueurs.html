@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Battle</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --p1:      #FF4B8B;
+    --p2:      #00D4FF;
+    --bg:      #0a0a0e;
+    --surface: #13131a;
+    --border:  #252530;
+    --text:    #f0f0f5;
+    --muted:   #606070;
+    --correct: #4ADE80;
+    --wrong:   #F87171;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  /* ══════════════ START SCREEN ══════════════ */
+  #start-screen {
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+  }
+  .start-badge {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 14px;
+    margin-bottom: 1.5rem;
+  }
+  .start-title {
+    font-size: clamp(40px, 10vw, 72px);
+    font-weight: 800;
+    line-height: 0.95;
+    margin-bottom: 0.4rem;
+  }
+  .start-title .t1 { color: var(--p1); }
+  .start-title .t2 { color: var(--p2); }
+  .start-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+  }
+
+  .names-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .vs-badge {
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--muted);
+  }
+  .name-input-wrap { position: relative; }
+  .name-dot {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .p1-dot { background: var(--p1); }
+  .p2-dot { background: var(--p2); }
+  .name-input-wrap input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px 10px 28px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .name-input-wrap.p1 input:focus { border-color: var(--p1); }
+  .name-input-wrap.p2 input:focus { border-color: var(--p2); }
+
+  .keys-hint {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  .kh-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .kh-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .kh-keys {
+    display: flex;
+    gap: 4px;
+  }
+  .kh-key {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .p1 .kh-key { color: var(--p1); border-color: rgba(255,75,139,0.4); }
+  .p2 .kh-key { color: var(--p2); border-color: rgba(0,212,255,0.4); }
+
+  /* ── CHRONO TOGGLE ── */
+  .chrono-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .chrono-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .chrono-label {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chrono-icon { font-size: 16px; }
+  .chrono-sub-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  /* Switch pill */
+  .toggle-pill {
+    width: 42px; height: 24px;
+    background: var(--border);
+    border-radius: 999px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-pill.on { background: linear-gradient(135deg, var(--p1), var(--p2)); }
+  .toggle-pill::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+  .toggle-pill.on::after { transform: translateX(18px); }
+
+  /* Durée pills */
+  .chrono-durations {
+    display: flex;
+    gap: 6px;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s;
+  }
+  .chrono-durations.visible {
+    max-height: 60px;
+    opacity: 1;
+    margin-top: 0.75rem;
+  }
+  .dur-btn {
+    flex: 1;
+    min-width: 60px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .dur-btn.selected {
+    border-color: var(--p1);
+    color: var(--p1);
+    background: rgba(255,75,139,0.08);
+  }
+
+  /* Timer urgent (rouge quand < 30s) */
+  .bb-timer.urgent { color: var(--wrong); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* ── RAPIDITÉ TOGGLE ── */
+  .speed-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .speed-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .speed-label {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .speed-icon { font-size: 16px; }
+  .speed-sub-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .speed-detail {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s;
+  }
+  .speed-detail.visible {
+    max-height: 80px;
+    opacity: 1;
+    margin-top: 0.75rem;
+  }
+  .speed-rules { display: flex; gap: 6px; }
+  .speed-rule {
+    flex: 1;
+    border-radius: 8px;
+    padding: 7px 6px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .speed-rule .sr-bonus { font-size: 15px; margin-bottom: 2px; }
+  .speed-rule .sr-time  { font-size: 9px; color: var(--muted); font-weight: 400; }
+  .speed-rule.gold   { border-color: rgba(250,204,21,0.4);  color: #facc15; background: rgba(250,204,21,0.06); }
+  .speed-rule.silver { border-color: rgba(148,163,184,0.4); color: #94a3b8; background: rgba(148,163,184,0.06); }
+
+  /* ── POPUP BONUS FLOTTANT ── */
+  .bonus-popup {
+    position: fixed;
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    pointer-events: none;
+    z-index: 999;
+    animation: floatUp 0.9s ease forwards;
+  }
+  .bonus-popup.gold   { color: #facc15; text-shadow: 0 0 12px rgba(250,204,21,0.6); }
+  .bonus-popup.silver { color: #94a3b8; text-shadow: 0 0 10px rgba(148,163,184,0.5); }
+  @keyframes floatUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    60%  { opacity: 1; transform: translateY(-40px) scale(1.2); }
+    100% { opacity: 0; transform: translateY(-70px) scale(0.9); }
+  }
+  @keyframes scoreBump { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+  .score-bump { animation: scoreBump 0.3s ease; }
+
+  /* ── MODE WARRIOR ── */
+  .warrior-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .warrior-toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none;
+  }
+  .warrior-label {
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .warrior-icon { font-size: 16px; }
+  .warrior-sub-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .warrior-detail {
+    overflow: hidden; max-height: 0; opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s;
+  }
+  .warrior-detail.visible { max-height: 100px; opacity: 1; margin-top: 0.75rem; }
+  .warrior-rules { display: flex; gap: 6px; }
+  .warrior-rule {
+    flex: 1; border-radius: 8px; padding: 7px 5px; text-align: center;
+    font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700;
+    border: 1px solid var(--border); background: var(--bg);
+  }
+  .warrior-rule .wr-bonus { font-size: 14px; margin-bottom: 2px; }
+  .warrior-rule .wr-streak { font-size: 9px; color: var(--muted); font-weight: 400; }
+  .warrior-rule.w1 { border-color: rgba(251,146,60,0.4);  color: #fb923c; background: rgba(251,146,60,0.06); }
+  .warrior-rule.w2 { border-color: rgba(239,68,68,0.4);   color: #ef4444; background: rgba(239,68,68,0.06); }
+  .warrior-rule.w3 { border-color: rgba(168,85,247,0.5);  color: #a855f7; background: rgba(168,85,247,0.08); }
+
+  /* Streak badge affiché dans le board */
+  .streak-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px;
+    transition: all 0.3s;
+  }
+  .streak-badge.s3  { background: rgba(251,146,60,0.15); color: #fb923c; border: 1px solid rgba(251,146,60,0.4); }
+  .streak-badge.s6  { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.4); }
+  .streak-badge.s10 { background: rgba(168,85,247,0.2);  color: #a855f7; border: 1px solid rgba(168,85,247,0.5); animation: glowPurple 1s infinite alternate; }
+  @keyframes glowPurple { from { box-shadow: 0 0 4px rgba(168,85,247,0.3); } to { box-shadow: 0 0 14px rgba(168,85,247,0.8); } }
+
+  /* ── MODE QUIZ ── */
+  .quiz-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem;
+  }
+  .quiz-toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none;
+  }
+  .quiz-label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .quiz-icon { font-size: 16px; }
+  .quiz-sub-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .quiz-detail {
+    overflow: hidden; max-height: 0; opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s;
+  }
+  .quiz-detail.visible { max-height: 160px; opacity: 1; margin-top: 0.75rem; }
+
+  /* Sélecteur niveau */
+  .level-btns { display: flex; gap: 6px; }
+  .level-btn {
+    flex: 1; border-radius: 8px; padding: 8px 4px; text-align: center;
+    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+    border: 1px solid var(--border); background: var(--bg); cursor: pointer;
+    color: var(--muted); transition: all 0.15s;
+  }
+  .level-btn .lb-icon { font-size: 16px; display: block; margin-bottom: 3px; }
+  .level-btn .lb-name { display: block; }
+  .level-btn .lb-pts  { font-size: 9px; font-weight: 400; color: var(--muted); display: block; margin-top: 2px; }
+  .level-btn.easy.sel   { border-color: rgba(74,222,128,0.5);  color: #4ade80; background: rgba(74,222,128,0.07); }
+  .level-btn.normal.sel { border-color: rgba(250,204,21,0.5);  color: #facc15; background: rgba(250,204,21,0.07); }
+  .level-btn.expert.sel { border-color: rgba(239,68,68,0.5);   color: #ef4444; background: rgba(239,68,68,0.07); }
+
+  /* Info quiz */
+  .quiz-info {
+    margin-top: 8px; font-size: 10px; color: var(--muted);
+    font-family: 'Space Mono', monospace; text-align: center;
+  }
+
+  /* Badge difficulté dans la battle bar */
+  .diff-badge {
+    font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700;
+    padding: 2px 7px; border-radius: 999px; letter-spacing: 1px;
+  }
+  .diff-badge.easy   { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+  .diff-badge.normal { background: rgba(250,204,21,0.12); color: #facc15; border: 1px solid rgba(250,204,21,0.3); }
+  .diff-badge.expert { background: rgba(239,68,68,0.12);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+  /* En mode quiz : les 2 boards montrent la même question */
+  .quiz-mode-tag {
+    font-family: 'Space Mono', monospace; font-size: 9px;
+    color: var(--muted); text-align: center; letter-spacing: 1px;
+    padding: 2px 0; margin-bottom: 4px;
+  }
+  /* Waiting overlay quand le joueur a déjà répondu en mode quiz */
+  .waiting-overlay {
+    text-align: center; font-family: 'Space Mono', monospace;
+    font-size: 11px; color: var(--muted); padding: 0.5rem 0;
+  }
+  /* Popup -1 */
+  .bonus-popup.minus { color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.6); }
+
+  /* Popup warrior plus grand */
+  .bonus-popup.warrior { font-size: 26px; }
+  .bonus-popup.w-orange { color: #fb923c; text-shadow: 0 0 14px rgba(251,146,60,0.7); }
+  .bonus-popup.w-red    { color: #ef4444; text-shadow: 0 0 14px rgba(239,68,68,0.7); }
+  .bonus-popup.w-purple { color: #a855f7; text-shadow: 0 0 18px rgba(168,85,247,0.9); font-size: 32px; }
+
+  .btn-start {
+    width: 100%;
+    background: linear-gradient(135deg, var(--p1), var(--p2));
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-start:hover { opacity: 0.88; transform: scale(0.99); }
+  .btn-start:active { transform: scale(0.97); }
+
+  /* ══════════════ GAME SCREEN ══════════════ */
+  #game-screen {
+    width: 100%;
+    max-width: 900px;
+    display: none;
+    flex-direction: column;
+    gap: 0;
+  }
+  #game-screen.active { display: flex; }
+
+  /* ── BATTLE BAR (TikTok style) ── */
+  .battle-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bb-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .bb-player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bb-player.right { flex-direction: row-reverse; }
+
+  .bb-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .bb-avatar.av1 { background: rgba(255,75,139,0.2); color: var(--p1); border: 2px solid var(--p1); }
+  .bb-avatar.av2 { background: rgba(0,212,255,0.2);  color: var(--p2); border: 2px solid var(--p2); }
+
+  .bb-info { min-width: 0; }
+  .bb-info.right { text-align: right; }
+  .bb-name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bb-score {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .bb-center {
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .bb-timer {
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .bb-qcount {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* La vraie barre TikTok */
+  .bb-bar-wrap {
+    position: relative;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--bg);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  /* Le côté gauche (joueur 1) part de la gauche */
+  .bb-fill-p1 {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 50%;
+    background: linear-gradient(to right, var(--p1), rgba(255,75,139,0.6));
+    border-radius: 999px 0 0 999px;
+    transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  /* Le côté droit (joueur 2) part de la droite */
+  .bb-fill-p2 {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 50%;
+    background: linear-gradient(to left, var(--p2), rgba(0,212,255,0.6));
+    border-radius: 0 999px 999px 0;
+    transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  /* Ligne centrale */
+  .bb-bar-center {
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 2px;
+    background: #fff;
+    transform: translateX(-50%);
+    opacity: 0.6;
+  }
+
+  /* ── BOARDS CÔTE À CÔTE ── */
+  .boards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .player-board {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .p1-board { border-top: 2px solid var(--p1); }
+  .p2-board { border-top: 2px solid var(--p2); }
+
+  .board-keys {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+  }
+  .p1-board .board-keys { color: rgba(255,75,139,0.6); text-align: left; }
+  .p2-board .board-keys { color: rgba(0,212,255,0.6);  text-align: right; }
+
+  .question-text {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text);
+    min-height: 40px;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 5px; }
+  .opt-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    text-align: left;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .opt-btn .ok {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: transparent;
+    flex-shrink: 0;
+    transition: all 0.1s;
+  }
+  .p1-board .opt-btn .ok { color: var(--p1); border-color: rgba(255,75,139,0.35); }
+  .p2-board .opt-btn .ok { color: var(--p2); border-color: rgba(0,212,255,0.35); }
+
+  .opt-btn:hover:not(:disabled) { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.03); }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct { border-color: var(--correct); background: rgba(74,222,128,0.07); color: var(--correct); }
+  .opt-btn.correct .ok { color: var(--correct); border-color: var(--correct); }
+  .opt-btn.wrong   { border-color: var(--wrong);   background: rgba(248,113,113,0.07); color: var(--wrong); }
+  .opt-btn.wrong .ok { color: var(--wrong); border-color: var(--wrong); }
+  .opt-btn.flash { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.3); }
+
+  .status-done {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding: 1.5rem 0;
+  }
+
+  /* ══════════════ RESULT ══════════════ */
+  #result-screen {
+    display: none;
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+  }
+  #result-screen.active { display: block; }
+
+  .res-battle-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .res-bb-track {
+    flex: 1;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+  }
+  .res-bb-p1 {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: linear-gradient(to right, var(--p1), rgba(255,75,139,0.5));
+    border-radius: 999px 0 0 999px;
+    transition: width 1s ease;
+  }
+  .res-bb-p2 {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    background: linear-gradient(to left, var(--p2), rgba(0,212,255,0.5));
+    border-radius: 0 999px 999px 0;
+    transition: width 1s ease;
+  }
+  .res-bb-mid {
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 2px;
+    background: #fff;
+    transform: translateX(-50%);
+    opacity: 0.5;
+  }
+  .res-name-p1 { font-size: 12px; color: var(--p1); font-weight: 700; white-space: nowrap; }
+  .res-name-p2 { font-size: 12px; color: var(--p2); font-weight: 700; white-space: nowrap; }
+
+  .res-icon  { font-size: 52px; margin-bottom: 0.75rem; }
+  .res-title { font-size: 28px; font-weight: 800; margin-bottom: 0.4rem; }
+  .res-sub   { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; margin-bottom: 1.5rem; }
+
+  .res-scores {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .res-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+  }
+  .res-val  { font-family: 'Space Mono', monospace; font-size: 34px; font-weight: 700; margin-bottom: 4px; }
+  .res-lbl  { font-size: 12px; color: var(--muted); }
+  .btn-restart {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 32px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .btn-restart:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
+
+  @media (max-width: 600px) {
+    .boards { grid-template-columns: 1fr; }
+    .names-row { grid-template-columns: 1fr auto 1fr; }
+    .keys-hint { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ START ══ -->
+<div id="start-screen">
+  <div class="start-badge">Quiz Battle</div>
+  <h1 class="start-title"><span class="t1">2</span> <span style="color:var(--muted)">vs</span> <span class="t2">2</span></h1>
+  <p class="start-sub">// 20 questions · à vos claviers</p>
+
+  <div class="names-row">
+    <div class="name-input-wrap p1">
+      <div class="name-dot p1-dot"></div>
+      <input type="text" id="name1" value="Joueur 1">
+    </div>
+    <span class="vs-badge">VS</span>
+    <div class="name-input-wrap p2">
+      <div class="name-dot p2-dot"></div>
+      <input type="text" id="name2" value="Joueur 2">
+    </div>
+  </div>
+
+  <div class="keys-hint">
+    <div class="kh-card p1">
+      <div class="kh-dot" style="background:var(--p1)"></div>
+      <div class="kh-keys">
+        <span class="kh-key p1">A</span>
+        <span class="kh-key p1">Z</span>
+        <span class="kh-key p1">E</span>
+        <span class="kh-key p1">R</span>
+      </div>
+    </div>
+    <div class="kh-card p2">
+      <div class="kh-dot" style="background:var(--p2)"></div>
+      <div class="kh-keys">
+        <span class="kh-key p2">1</span>
+        <span class="kh-key p2">2</span>
+        <span class="kh-key p2">3</span>
+        <span class="kh-key p2">4</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHRONO OPTION -->
+  <div class="chrono-section">
+    <div class="chrono-toggle-row" onclick="toggleChrono()">
+      <div class="chrono-label">
+        <span class="chrono-icon">⏱</span>
+        <div>
+          <div>Chronomètre</div>
+          <div class="chrono-sub-label">Limite de temps par partie</div>
+        </div>
+      </div>
+      <div class="toggle-pill" id="toggle-pill"></div>
+    </div>
+    <div class="chrono-durations" id="chrono-durations">
+      <button class="dur-btn" onclick="selectDur(1,this)">1 min</button>
+      <button class="dur-btn" onclick="selectDur(2,this)">2 min</button>
+      <button class="dur-btn selected" onclick="selectDur(3,this)">3 min</button>
+      <button class="dur-btn" onclick="selectDur(5,this)">5 min</button>
+      <button class="dur-btn" onclick="selectDur(10,this)">10 min</button>
+    </div>
+  </div>
+
+  <!-- RAPIDITÉ OPTION -->
+  <div class="speed-section">
+    <div class="speed-toggle-row" onclick="toggleSpeed()">
+      <div class="speed-label">
+        <span class="speed-icon">⚡</span>
+        <div>
+          <div>Bonus de rapidité</div>
+          <div class="speed-sub-label">Points selon la vitesse de réponse</div>
+        </div>
+      </div>
+      <div class="toggle-pill" id="speed-pill"></div>
+    </div>
+    <div class="speed-detail" id="speed-detail">
+      <div class="speed-rules">
+        <div class="speed-rule gold">
+          <div class="sr-bonus">+10</div>
+          <div class="sr-time">0 – 2 s</div>
+        </div>
+        <div class="speed-rule silver">
+          <div class="sr-bonus">+5</div>
+          <div class="sr-time">3 – 5 s</div>
+        </div>
+        <div class="speed-rule">
+          <div class="sr-bonus" style="color:var(--muted)">+0</div>
+          <div class="sr-time">+ 6 s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE WARRIOR -->
+  <div class="warrior-section">
+    <div class="warrior-toggle-row" onclick="toggleWarrior()">
+      <div class="warrior-label">
+        <span class="warrior-icon">🔥</span>
+        <div>
+          <div>Mode Warrior</div>
+          <div class="warrior-sub-label">Bonus sur les séries de bonnes réponses</div>
+        </div>
+      </div>
+      <div class="toggle-pill" id="warrior-pill"></div>
+    </div>
+    <div class="warrior-detail" id="warrior-detail">
+      <div class="warrior-rules">
+        <div class="warrior-rule w1">
+          <div class="wr-bonus">+15</div>
+          <div class="wr-streak">🔥×3</div>
+        </div>
+        <div class="warrior-rule w2">
+          <div class="wr-bonus">+30</div>
+          <div class="wr-streak">🔥×6</div>
+        </div>
+        <div class="warrior-rule w3">
+          <div class="wr-bonus">+100</div>
+          <div class="wr-streak">🔥×10</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE QUIZ -->
+  <div class="quiz-section">
+    <div class="quiz-toggle-row" onclick="toggleQuiz()">
+      <div class="quiz-label">
+        <span class="quiz-icon">🎯</span>
+        <div>
+          <div>Mode Quiz</div>
+          <div class="quiz-sub-label">Mêmes questions · −1 si erreur</div>
+        </div>
+      </div>
+      <div class="toggle-pill" id="quiz-pill"></div>
+    </div>
+    <div class="quiz-detail" id="quiz-detail">
+      <div class="level-btns">
+        <button class="level-btn easy sel" onclick="selectLevel('easy',this)">
+          <span class="lb-icon">🟢</span>
+          <span class="lb-name">Facile</span>
+          <span class="lb-pts">+1 pt</span>
+        </button>
+        <button class="level-btn normal" onclick="selectLevel('normal',this)">
+          <span class="lb-icon">🟡</span>
+          <span class="lb-name">Normal</span>
+          <span class="lb-pts">+2 pts</span>
+        </button>
+        <button class="level-btn expert" onclick="selectLevel('expert',this)">
+          <span class="lb-icon">🔴</span>
+          <span class="lb-name">Expert</span>
+          <span class="lb-pts">+3 pts</span>
+        </button>
+      </div>
+      <div class="quiz-info">Questions communes · le premier qui répond passe à la suivante · −1 si erreur</div>
+    </div>
+  </div>
+
+  <button class="btn-start" onclick="startGame()">⚡ Lancer le battle</button>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="game-screen">
+
+  <!-- BATTLE BAR TIKTOK -->
+  <div class="battle-bar">
+    <div class="bb-top">
+      <div class="bb-player">
+        <div class="bb-avatar av1" id="av1">J1</div>
+        <div class="bb-info">
+          <div class="bb-name" id="bb-name1">Joueur 1</div>
+          <div class="bb-score" id="bb-score1">0 pts</div>
+        </div>
+      </div>
+
+      <div class="bb-center">
+        <div class="bb-timer" id="timer-display">00:00</div>
+        <div class="bb-qcount" id="q-counter">Q1/20 · Q1/20</div>
+        <div><span class="diff-badge" id="diff-badge" style="display:none"></span></div>
+      </div>
+
+      <div class="bb-player right">
+        <div class="bb-avatar av2" id="av2">J2</div>
+        <div class="bb-info right">
+          <div class="bb-name" id="bb-name2">Joueur 2</div>
+          <div class="bb-score" id="bb-score2">0 pts</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bb-bar-wrap">
+      <div class="bb-fill-p1" id="battle-bar-p1"></div>
+      <div class="bb-fill-p2" id="battle-bar-p2"></div>
+      <div class="bb-bar-center"></div>
+    </div>
+  </div>
+
+  <!-- PLATEAUX JOUEURS -->
+  <div class="boards">
+    <div class="player-board p1-board">
+      <div class="board-keys">A · Z · E · R</div>
+      <div id="play-area-0"></div>
+    </div>
+    <div class="player-board p2-board">
+      <div class="board-keys">1 · 2 · 3 · 4</div>
+      <div id="play-area-1"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULT ══ -->
+<div id="result-screen">
+  <div class="res-battle-bar">
+    <span class="res-name-p1" id="res-n1">J1</span>
+    <div class="res-bb-track">
+      <div class="res-bb-p1" id="res-bar-p1" style="width:50%"></div>
+      <div class="res-bb-p2" id="res-bar-p2" style="width:50%"></div>
+      <div class="res-bb-mid"></div>
+    </div>
+    <span class="res-name-p2" id="res-n2">J2</span>
+  </div>
+
+  <div class="res-icon" id="res-icon">🏆</div>
+  <h2 class="res-title" id="res-title"></h2>
+  <p class="res-sub" id="res-sub"></p>
+
+  <div class="res-scores">
+    <div class="res-card">
+      <div class="res-val" id="r-score-0" style="color:var(--p1)">-</div>
+      <div class="res-lbl" id="r-name-0">Joueur 1</div>
+    </div>
+    <div class="res-card">
+      <div class="res-val" id="r-score-1" style="color:var(--p2)">-</div>
+      <div class="res-lbl" id="r-name-1">Joueur 2</div>
+    </div>
+  </div>
+  <button class="btn-restart" onclick="resetGame()">↺ Rejouer</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  BANQUE 110 QUESTIONS
+// ══════════════════════════════════════════════
+// ════ BANQUE FACILE (25 questions) ════
+const BANK_EASY = [
+  {q:"De quelle couleur est le ciel par temps clair ?",     opts:["Rouge","Bleu","Vert","Jaune"],              a:1},
+  {q:"Combien font 2 + 2 ?",                               opts:["3","4","5","6"],                            a:1},
+  {q:"Quel animal fait 'miaou' ?",                         opts:["Chien","Vache","Chat","Mouton"],            a:2},
+  {q:"Capitale de la France ?",                            opts:["Lyon","Paris","Marseille","Bordeaux"],       a:1},
+  {q:"Combien de jours dans une semaine ?",                opts:["5","6","7","8"],                            a:2},
+  {q:"Quel fruit est jaune et se pèle ?",                  opts:["Pomme","Orange","Banane","Raisin"],         a:2},
+  {q:"Combien font 10 − 3 ?",                              opts:["6","7","8","9"],                            a:1},
+  {q:"De quelle couleur est l'herbe ?",                    opts:["Bleue","Jaune","Verte","Rouge"],            a:2},
+  {q:"Quel animal a une trompe ?",                         opts:["Lion","Girafe","Éléphant","Zèbre"],         a:2},
+  {q:"Combien de mois dans une année ?",                   opts:["10","11","12","13"],                        a:2},
+  {q:"Quel est le contraire de chaud ?",                   opts:["Tiède","Froid","Doux","Frais"],             a:1},
+  {q:"Combien font 3 × 3 ?",                               opts:["6","8","9","12"],                           a:2},
+  {q:"Quel sport se joue avec un ballon rond ?",           opts:["Rugby","Tennis","Football","Golf"],         a:2},
+  {q:"Combien de pattes a un chat ?",                      opts:["2","4","6","8"],                            a:1},
+  {q:"Quelle saison vient après l'hiver ?",                opts:["Été","Automne","Printemps","Hiver"],        a:2},
+  {q:"De quelle couleur est une tomate mûre ?",            opts:["Verte","Bleue","Jaune","Rouge"],            a:3},
+  {q:"Combien font 5 + 5 ?",                               opts:["8","9","10","11"],                          a:2},
+  {q:"Quel animal est le roi de la jungle ?",              opts:["Tigre","Lion","Panthère","Guépard"],        a:1},
+  {q:"Dans quel pays se trouve Paris ?",                   opts:["Espagne","Italie","France","Belgique"],     a:2},
+  {q:"Combien de roues a une voiture ?",                   opts:["2","3","4","6"],                            a:2},
+  {q:"Quel est le plus grand animal terrestre ?",          opts:["Girafe","Rhino","Hippo","Éléphant"],        a:3},
+  {q:"De quelle couleur est le soleil ?",                  opts:["Blanc","Jaune","Orange","Rouge"],           a:1},
+  {q:"Combien font 10 × 2 ?",                              opts:["12","18","20","22"],                        a:2},
+  {q:"Quel oiseau ne vole pas ?",                          opts:["Aigle","Moineau","Autruche","Mouette"],     a:2},
+  {q:"Combien de côtés a un carré ?",                      opts:["3","4","5","6"],                            a:1},
+];
+
+// ════ BANQUE NORMAL (déjà existante — renommée) ════
+const BANK_NORMAL = [
+  {q:"Capitale de la France ?",                        opts:["Lyon","Marseille","Paris","Bordeaux"],           a:2},
+  {q:"Capitale de l'Australie ?",                      opts:["Sydney","Melbourne","Brisbane","Canberra"],       a:3},
+  {q:"Capitale de l'Espagne ?",                        opts:["Barcelone","Séville","Valence","Madrid"],         a:3},
+  {q:"Capitale du Canada ?",                           opts:["Toronto","Montréal","Vancouver","Ottawa"],        a:3},
+  {q:"Capitale du Brésil ?",                           opts:["São Paulo","Rio","Brasília","Salvador"],          a:2},
+  {q:"Plus grand océan ?",                             opts:["Atlantique","Indien","Pacifique","Arctique"],     a:2},
+  {q:"Plus grand pays du monde ?",                     opts:["Chine","États-Unis","Canada","Russie"],           a:3},
+  {q:"Plus haute montagne du monde ?",                 opts:["K2","Mont-Blanc","Everest","Kilimandjaro"],       a:2},
+  {q:"Fleuve qui traverse Paris ?",                    opts:["Loire","Rhône","Seine","Garonne"],                a:2},
+  {q:"Fleuve le plus long du monde ?",                 opts:["Amazone","Nil","Mississippi","Yangtsé"],          a:1},
+  {q:"Pays de la Tour de Pise ?",                      opts:["Espagne","France","Grèce","Italie"],              a:3},
+  {q:"Continent le plus grand ?",                      opts:["Amérique","Afrique","Europe","Asie"],             a:3},
+  {q:"Capitale du Japon ?",                            opts:["Osaka","Kyoto","Tokyo","Hiroshima"],              a:2},
+  {q:"Pays du Machu Picchu ?",                         opts:["Brésil","Colombie","Pérou","Argentine"],          a:2},
+  {q:"Pays le plus peuplé du monde ?",                 opts:["Inde","Chine","États-Unis","Indonésie"],          a:0},
+  {q:"Formule chimique de l'eau ?",                    opts:["CO2","H2O","O2","HCl"],                          a:1},
+  {q:"Symbole chimique de l'or ?",                     opts:["Or","Go","Au","Ag"],                             a:2},
+  {q:"Gaz que l'on respire principalement ?",          opts:["Oxygène","Azote","CO2","Argon"],                  a:1},
+  {q:"1er élément du tableau périodique ?",            opts:["Hélium","Oxygène","Hydrogène","Lithium"],         a:2},
+  {q:"Formule chimique du sel ?",                      opts:["KCl","NaCl","MgO","CaCO3"],                      a:1},
+  {q:"Planète la plus proche du Soleil ?",             opts:["Vénus","Mars","Mercure","Terre"],                 a:2},
+  {q:"Combien de planètes dans le système solaire ?",  opts:["7","8","9","10"],                                a:1},
+  {q:"Qui a découvert la pénicilline ?",               opts:["Pasteur","Fleming","Curie","Koch"],               a:1},
+  {q:"Vitesse de la lumière (approx.) ?",              opts:["150 000 km/s","300 000 km/s","450 000 km/s","600 000 km/s"], a:1},
+  {q:"Organe qui produit l'insuline ?",                opts:["Foie","Rein","Pancréas","Rate"],                  a:2},
+  {q:"Nombre d'os dans le corps adulte ?",             opts:["186","206","226","246"],                         a:1},
+  {q:"Plus grande planète du système solaire ?",       opts:["Saturne","Uranus","Neptune","Jupiter"],           a:3},
+  {q:"Distance Terre-Lune (approx.) ?",                opts:["38 000 km","384 000 km","3 840 000 km","38 400 km"], a:1},
+  {q:"Symbole chimique du fer ?",                      opts:["Fe","Fr","Fi","Fo"],                             a:0},
+  {q:"Chromosomes dans le corps humain ?",             opts:["23","46","48","52"],                             a:1},
+  {q:"Année de la Révolution française ?",             opts:["1689","1776","1789","1804"],                     a:2},
+  {q:"Année du 1er pas sur la Lune ?",                 opts:["1965","1967","1969","1972"],                     a:2},
+  {q:"Début de la 2e Guerre mondiale ?",               opts:["1935","1937","1939","1941"],                     a:2},
+  {q:"1er président des États-Unis ?",                 opts:["Lincoln","Jefferson","Franklin","Washington"],   a:3},
+  {q:"Année de la mort de Napoléon ?",                 opts:["1815","1821","1827","1832"],                     a:1},
+  {q:"Quel mur est tombé en 1989 ?",                   opts:["Mur de Chine","Mur de Berlin","Mur d'Hadrien","Mur de Jéricho"], a:1},
+  {q:"Empire de Jules César ?",                        opts:["Grec","Perse","Romain","Ottoman"],               a:2},
+  {q:"Pays des bombes atomiques de 1945 ?",            opts:["Allemagne","Corée","Chine","Japon"],              a:3},
+  {q:"Qui a découvert l'Amérique en 1492 ?",           opts:["Magellan","Vespucci","Colomb","Cabot"],           a:2},
+  {q:"Année de la prise de la Bastille ?",             opts:["1787","1788","1789","1790"],                     a:2},
+  {q:"Qui a peint la Joconde ?",                       opts:["Michel-Ange","Raphaël","Léonard de Vinci","Botticelli"], a:2},
+  {q:"Auteur des Misérables ?",                        opts:["Balzac","Zola","Hugo","Flaubert"],               a:2},
+  {q:"Compositeur de la Symphonie n°5 ?",              opts:["Mozart","Bach","Beethoven","Chopin"],             a:2},
+  {q:"Auteur de Hamlet ?",                             opts:["Molière","Shakespeare","Racine","Corneille"],    a:1},
+  {q:"Qui a peint Le Cri ?",                           opts:["Dalí","Van Gogh","Munch","Klimt"],               a:2},
+  {q:"Qui a peint la chapelle Sixtine ?",              opts:["Raphaël","Botticelli","Léonard","Michel-Ange"],  a:3},
+  {q:"Auteur de L'Étranger ?",                         opts:["Sartre","Camus","Gide","Malraux"],               a:1},
+  {q:"Ville où se trouve le Louvre ?",                 opts:["Londres","Madrid","Rome","Paris"],               a:3},
+  {q:"Auteur de Don Quichotte ?",                      opts:["Lope de Vega","Cervantes","Calderón","Quevedo"], a:1},
+  {q:"Auteur de Madame Bovary ?",                      opts:["Balzac","Hugo","Zola","Flaubert"],               a:3},
+  {q:"7 × 8 = ?",                                     opts:["54","56","58","62"],                             a:1},
+  {q:"12² = ?",                                        opts:["124","132","144","148"],                         a:2},
+  {q:"Côtés d'un hexagone ?",                          opts:["5","6","7","8"],                                a:1},
+  {q:"Heures dans une semaine ?",                      opts:["148","156","168","172"],                         a:2},
+  {q:"Zéros dans un milliard ?",                       opts:["6","7","8","9"],                                a:3},
+  {q:"Valeur de π (2 décimales) ?",                    opts:["3.12","3.14","3.16","3.18"],                    a:1},
+  {q:"Degrés dans un triangle ?",                      opts:["90","180","270","360"],                         a:1},
+  {q:"15% de 200 = ?",                                 opts:["20","25","30","35"],                            a:2},
+  {q:"√144 = ?",                                       opts:["11","12","13","14"],                            a:1},
+  {q:"2^10 = ?",                                       opts:["512","1 024","2 048","256"],                    a:1},
+  {q:"Joueurs dans une équipe de foot ?",              opts:["9","10","11","12"],                              a:2},
+  {q:"Sets pour gagner à Wimbledon (H) ?",             opts:["2","3","4","5"],                                a:1},
+  {q:"Joueurs dans une équipe de basket ?",            opts:["4","5","6","7"],                                a:1},
+  {q:"Pays avec le + de Coupes du Monde foot ?",       opts:["Allemagne","Argentine","Brésil","France"],      a:2},
+  {q:"Sport pratiqué à Wimbledon ?",                   opts:["Golf","Cricket","Tennis","Polo"],               a:2},
+  {q:"Joueurs dans une équipe de rugby à XV ?",        opts:["13","14","15","16"],                            a:2},
+  {q:"Joueurs dans une équipe de volley ?",            opts:["5","6","7","8"],                                a:1},
+  {q:"Sport avec un volant ?",                         opts:["Tennis","Squash","Badminton","Padel"],          a:2},
+  {q:"Points pour un try au rugby ?",                  opts:["3","4","5","7"],                                a:2},
+  {q:"Animal le plus rapide sur terre ?",              opts:["Lion","Guépard","Faucon","Autruche"],            a:1},
+  {q:"Plus grand mammifère marin ?",                   opts:["Grand requin blanc","Dauphin","Baleine bleue","Orque"], a:2},
+  {q:"Pattes d'une araignée ?",                        opts:["6","8","10","12"],                              a:1},
+  {q:"Animal symbole de l'Australie ?",                opts:["Koala","Kangourou","Émeu","Wombat"],            a:1},
+  {q:"Plus grand oiseau du monde ?",                   opts:["Condor","Albatros","Autruche","Émeu"],          a:2},
+  {q:"Combien de cœurs pour une pieuvre ?",            opts:["1","2","3","4"],                                a:2},
+  {q:"Reptile qui change de couleur ?",                opts:["Gecko","Iguane","Caméléon","Varan"],            a:2},
+  {q:"Plus petit oiseau du monde ?",                   opts:["Colibri","Roitelet","Troglodyte","Fauvette"],   a:0},
+  {q:"Dents de lait d'un enfant ?",                    opts:["16","18","20","22"],                            a:2},
+  {q:"Insecte qui produit le miel ?",                  opts:["Guêpe","Frelon","Abeille","Bourdon"],           a:2},
+  {q:"Inventeur du téléphone ?",                       opts:["Edison","Tesla","Bell","Marconi"],              a:2},
+  {q:"Année de fondation de Google ?",                 opts:["1996","1998","2000","2002"],                    a:1},
+  {q:"Pays qui a inventé le papier ?",                 opts:["Inde","Égypte","Chine","Mésopotamie"],          a:2},
+  {q:"Créateur du langage Python ?",                   opts:["Ruby","Java","Guido van Rossum","Perl"],        a:2},
+  {q:"Entreprise créatrice de l'iPhone ?",             opts:["Samsung","Google","Apple","Microsoft"],         a:2},
+  {q:"Année du lancement de Spoutnik ?",               opts:["1952","1955","1957","1961"],                    a:2},
+  {q:"Que signifie CPU ?",                             opts:["Central Processing Unit","Computer Power Unit","Core Program Utility","Central Power Unit"], a:0},
+  {q:"Langage de style des pages web ?",               opts:["HTML","XML","CSS","PHP"],                       a:2},
+  {q:"Inventeur associé à l'ampoule électrique ?",     opts:["Tesla","Bell","Edison","Marconi"],              a:2},
+  {q:"Système mobile d'Apple ?",                       opts:["Android","Windows","iOS","HarmonyOS"],          a:2},
+  {q:"Pays d'origine de la pizza ?",                   opts:["France","Grèce","Espagne","Italie"],            a:3},
+  {q:"Fromage du tiramisu ?",                          opts:["Ricotta","Mozzarella","Mascarpone","Gorgonzola"], a:2},
+  {q:"Fruit du guacamole ?",                           opts:["Mangue","Avocat","Lime","Tomate"],              a:1},
+  {q:"Épice jaune du curry ?",                         opts:["Safran","Paprika","Curcuma","Cumin"],           a:2},
+  {q:"Pays d'origine des sushis ?",                    opts:["Chine","Corée","Vietnam","Japon"],              a:3},
+  {q:"Céréale du pain traditionnel ?",                 opts:["Riz","Maïs","Blé","Seigle"],                   a:2},
+  {q:"Ingrédient principal du houmous ?",              opts:["Lentilles","Pois chiches","Haricots blancs","Fèves"], a:1},
+  {q:"Boisson issue de raisins fermentés ?",           opts:["Bière","Cidre","Vin","Sake"],                   a:2},
+  {q:"Pays d'origine de la paella ?",                  opts:["Portugal","Italie","Mexique","Espagne"],        a:3},
+  {q:"Dessert glacé italien à base d'œufs ?",          opts:["Panna cotta","Gelato","Semifreddo","Tiramisu"], a:2},
+  {q:"Combien de grammes dans un kg ?",                opts:["100","500","1 000","10 000"],                   a:2},
+  {q:"Monnaie du Japon ?",                             opts:["Yuan","Won","Yen","Baht"],                      a:2},
+  {q:"Langue officielle du Brésil ?",                  opts:["Espagnol","Portugais","Brésilien","Anglais"],   a:1},
+  {q:"Nombre de continents ?",                         opts:["5","6","7","8"],                                a:2},
+  {q:"Dents d'un adulte ?",                            opts:["28","30","32","34"],                            a:2},
+  {q:"Métal le plus léger ?",                          opts:["Aluminium","Titane","Magnésium","Lithium"],     a:3},
+  {q:"Rouge + bleu = ?",                               opts:["Vert","Orange","Violet","Marron"],              a:2},
+  {q:"Rouge + jaune = ?",                              opts:["Violet","Orange","Rose","Marron"],              a:1},
+  {q:"Secondes dans une heure ?",                      opts:["360","600","3 600","36 000"],                   a:2},
+  {q:"Plus grand désert du monde ?",                   opts:["Sahara","Gobi","Arabie","Antarctique"],         a:3},
+];
+
+// ════ BANQUE EXPERT (25 questions) ════
+const BANK_EXPERT = [
+  {q:"Quel est le plus petit os du corps humain ?",         opts:["Péroné","Étrier","Coccyx","Phalange"],         a:1},
+  {q:"En quelle année fut signé le traité de Westphalie ?", opts:["1618","1648","1678","1688"],                   a:1},
+  {q:"Quelle est la capitale du Kazakhstan ?",              opts:["Almaty","Noursoultan","Chimkent","Taraz"],     a:1},
+  {q:"Qui a développé la théorie de la relativité générale ?", opts:["Newton","Bohr","Einstein","Planck"],       a:2},
+  {q:"Quel élément chimique a le numéro atomique 79 ?",    opts:["Platine","Argent","Or","Mercure"],              a:2},
+  {q:"Quelle est la loi de composition de la vitesse en physique relativiste ?", opts:["v1+v2","v1+v2/c","(v1+v2)/(1+v1v2/c²)","v1×v2/c"], a:2},
+  {q:"Quel philosophe a écrit la Critique de la raison pure ?", opts:["Hegel","Kant","Schopenhauer","Nietzsche"], a:1},
+  {q:"Quelle est la densité de l'eau à 4°C (kg/m³) ?",    opts:["998","1000","1002","1005"],                    a:1},
+  {q:"Quelle est la capitale de Papouasie-Nouvelle-Guinée ?", opts:["Suva","Port Moresby","Honiara","Apia"],     a:1},
+  {q:"Quel est le symbole chimique du tungstène ?",        opts:["Tu","Tn","W","Tg"],                            a:2},
+  {q:"En quelle année Galilée publie-t-il ses Discours ?", opts:["1618","1628","1638","1648"],                   a:2},
+  {q:"Quel mathématicien a démontré le dernier théorème de Fermat ?", opts:["Perelman","Wiles","Tao","Grothendieck"], a:1},
+  {q:"Quel est le nom du paradoxe de l'écureuil d'Einstein ?", opts:["EPR","EPQ","ERP","ERQ"],                   a:0},
+  {q:"Quelle nation a inventé l'imprimerie à caractères mobiles ?", opts:["Allemagne","Chine","Corée","Japon"],   a:1},
+  {q:"Combien de dimensions stipule la théorie des cordes (M-théorie) ?", opts:["10","11","12","26"],            a:1},
+  {q:"Quel est le pH du sang humain ?",                    opts:["6.8","7.0","7.4","7.8"],                       a:2},
+  {q:"Quel auteur a écrit 'À la recherche du temps perdu' ?", opts:["Flaubert","Zola","Proust","Gide"],          a:2},
+  {q:"Quelle est la formule chimique de l'acide sulfurique ?", opts:["H2SO3","H2SO4","H2S2O7","HSO4"],          a:1},
+  {q:"Qui a peint Les Ménines ?",                          opts:["El Greco","Goya","Murillo","Vélasquez"],       a:3},
+  {q:"Quelle est la constante de Planck (ordre de grandeur) ?", opts:["10⁻³⁴ J·s","10⁻³⁰ J·s","10⁻²⁴ J·s","10⁻¹⁸ J·s"], a:0},
+  {q:"Quel est le nom scientifique de l'homme moderne ?",  opts:["Homo habilis","Homo erectus","Homo sapiens","Homo neanderthalensis"], a:2},
+  {q:"Quelle guerre opposa Athènes à Sparte au Ve siècle av. J.-C. ?", opts:["Guerre Médique","Guerre du Péloponnèse","Guerre punique","Guerre Sociale"], a:1},
+  {q:"Quelle ville abrite le CERN ?",                      opts:["Vienne","Berne","Genève","Zurich"],            a:2},
+  {q:"Quel est le seul métal liquide à température ambiante ?", opts:["Gallium","Césium","Mercure","Brome"],     a:2},
+  {q:"Quelle est la vitesse de rotation de la Terre sur elle-même (km/h à l'équateur) ?", opts:["800","1 200","1 670","2 000"], a:2},
+];
+
+// Sélecteur de banque selon le mode
+const BANK = BANK_NORMAL; // banque par défaut (battle mode)
+
+// ══════════════════════════════════════════════
+//  TOUCHES
+// ══════════════════════════════════════════════
+const P1_KEYS   = { a:0, z:1, e:2, r:3 };
+const P2_KEYS   = { 1:0, 2:1, 3:2, 4:3 };
+const P1_LABELS = ['A','Z','E','R'];
+const P2_LABELS = ['1','2','3','4'];
+const TOTAL     = 20;
+
+let players       = [];
+let timerInterval = null;
+let startTime     = null;
+let gameActive    = false;
+let chronoEnabled    = false;
+let chronoSeconds    = 3 * 60;
+let timeLeft         = 0;
+let speedEnabled      = false;
+let questionStartTime = {};   // { playerIdx: timestamp }
+let warriorEnabled    = false;
+// streak[playerIdx] = nb de bonnes réponses consécutives
+let streak            = [0, 0];
+// Mode quiz
+let quizMode          = false;
+let quizLevel         = 'easy';         // 'easy' | 'normal' | 'expert'
+const LEVEL_PTS       = {easy:1, normal:2, expert:3};
+let quizCurrentQ      = 0;             // index de la question commune actuelle
+let quizAnswered      = [false, false]; // chaque joueur a-t-il répondu ?
+let quizQuestions     = [];            // liste des 20 questions communes
+
+// ── Toggle chrono ──
+function toggleChrono() {
+  chronoEnabled = !chronoEnabled;
+  document.getElementById('toggle-pill').classList.toggle('on', chronoEnabled);
+  document.getElementById('chrono-durations').classList.toggle('visible', chronoEnabled);
+}
+function selectDur(min, btn) {
+  event.stopPropagation();
+  chronoSeconds = min * 60;
+  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ── Toggle rapidité ──
+function toggleSpeed() {
+  speedEnabled = !speedEnabled;
+  document.getElementById('speed-pill').classList.toggle('on', speedEnabled);
+  document.getElementById('speed-detail').classList.toggle('visible', speedEnabled);
+}
+
+// ── Toggle quiz ──
+function toggleQuiz() {
+  quizMode = !quizMode;
+  document.getElementById('quiz-pill').classList.toggle('on', quizMode);
+  document.getElementById('quiz-detail').classList.toggle('visible', quizMode);
+}
+function selectLevel(lvl, btn) {
+  event.stopPropagation();
+  quizLevel = lvl;
+  document.querySelectorAll('.level-btn').forEach(b => {
+    b.classList.remove('sel');
+  });
+  btn.classList.add('sel');
+}
+
+// ── Toggle warrior ──
+function toggleWarrior() {
+  warriorEnabled = !warriorEnabled;
+  document.getElementById('warrior-pill').classList.toggle('on', warriorEnabled);
+  document.getElementById('warrior-detail').classList.toggle('visible', warriorEnabled);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// ── Mise à jour de la battle bar ──
+function updateBattleBar() {
+  const s1 = players[0].score;
+  const s2 = players[1].score;
+  const total = s1 + s2 || 1;
+  // Chaque côté occupe 50% au départ et évolue selon les scores
+  // P1 prend de la place depuis la gauche, P2 depuis la droite
+  const p1Pct = Math.round((s1 / total) * 100);
+  const p2Pct = 100 - p1Pct;
+  // On ramène au format "part du total possible" pour un effet visuel propre
+  // En réalité on mappe sur [10%..90%] pour toujours garder les deux couleurs visibles
+  const mapped1 = 10 + (p1Pct / 100) * 80;
+  const mapped2 = 100 - mapped1;
+
+  document.getElementById('battle-bar-p1').style.width = mapped1 + '%';
+  document.getElementById('battle-bar-p2').style.width = mapped2 + '%';
+
+  document.getElementById('bb-score1').textContent = s1 + ' pts';
+  document.getElementById('bb-score2').textContent = s2 + ' pts';
+}
+
+function startGame() {
+  const n1 = document.getElementById('name1').value.trim() || 'Joueur 1';
+  const n2 = document.getElementById('name2').value.trim() || 'Joueur 2';
+
+  // Choisir la banque selon le mode
+  let activeBank = quizMode ? (quizLevel==='easy' ? BANK_EASY : quizLevel==='expert' ? BANK_EXPERT : BANK_NORMAL) : BANK_NORMAL;
+  const shuffled = shuffle(activeBank);
+
+  if (quizMode) {
+    // Mode quiz : questions communes
+    quizQuestions   = shuffled.slice(0, TOTAL);
+    quizCurrentQ    = 0;
+    quizAnswered    = [false, false];
+    players = [
+      { name:n1, questions:quizQuestions, current:0, score:0, done:false, locked:false },
+      { name:n2, questions:quizQuestions, current:0, score:0, done:false, locked:false },
+    ];
+  } else {
+    players = [
+      { name:n1, questions:shuffled.slice(0,TOTAL),       current:0, score:0, done:false, locked:false },
+      { name:n2, questions:shuffled.slice(TOTAL,TOTAL*2), current:0, score:0, done:false, locked:false },
+    ];
+  }
+
+  // Avatars (initiales)
+  const av1 = n1.charAt(0).toUpperCase();
+  const av2 = n2.charAt(0).toUpperCase();
+  document.getElementById('av1').textContent     = av1;
+  document.getElementById('av2').textContent     = av2;
+  document.getElementById('bb-name1').textContent= n1;
+  document.getElementById('bb-name2').textContent= n2;
+  // Reset battle bar
+  document.getElementById('battle-bar-p1').style.width = '50%';
+  document.getElementById('battle-bar-p2').style.width = '50%';
+  document.getElementById('bb-score1').textContent = '0 pts';
+  document.getElementById('bb-score2').textContent = '0 pts';
+
+  // Badge difficulté dans la battle bar
+  const diffEl = document.getElementById('diff-badge');
+  if (quizMode) {
+    const labels = {easy:'🟢 FACILE', normal:'🟡 NORMAL', expert:'🔴 EXPERT'};
+    diffEl.textContent = labels[quizLevel];
+    diffEl.className = 'diff-badge ' + quizLevel;
+    diffEl.style.display = 'inline-block';
+  } else {
+    diffEl.style.display = 'none';
+  }
+
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('game-screen').classList.add('active');
+
+  startTime = Date.now();
+  timeLeft  = chronoSeconds;
+  timerInterval = setInterval(tickTimer, 1000);
+  gameActive = true;
+
+  renderPlayer(0);
+  renderPlayer(1);
+  updateCounter();
+}
+
+// ── Web Audio context (créé au premier besoin) ──
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// Bip sec style minuteur — fréquence + durée variables selon urgence
+function playBeep(freq = 880, duration = 0.08, vol = 0.35) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+
+function tickTimer() {
+  const el = document.getElementById('timer-display');
+  if (chronoEnabled) {
+    timeLeft--;
+    const m = String(Math.floor(timeLeft / 60)).padStart(2,'0');
+    const s = String(timeLeft % 60).padStart(2,'0');
+    el.textContent = `${m}:${s}`;
+    el.classList.toggle('urgent', timeLeft <= 30);
+
+    // Sons à moins de 10 secondes
+    if (timeLeft > 0 && timeLeft <= 10) {
+      if (timeLeft <= 3) {
+        // Dernières 3s : double bip aigu rapide
+        playBeep(1200, 0.07, 0.5);
+        setTimeout(() => playBeep(1400, 0.07, 0.5), 100);
+      } else {
+        // 4s–10s : bip simple de plus en plus aigu
+        const freq = 700 + (10 - timeLeft) * 40;
+        playBeep(freq, 0.09, 0.4);
+      }
+    }
+
+    if (timeLeft <= 0) {
+      // Son final long
+      playBeep(440, 0.6, 0.5);
+      setTimeout(() => playBeep(330, 0.5, 0.4), 200);
+      endGame();
+    }
+  } else {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    el.textContent =
+      String(Math.floor(elapsed/60)).padStart(2,'0') + ':' + String(elapsed%60).padStart(2,'0');
+  }
+}
+
+function updateCounter() {
+  if (quizMode) {
+    document.getElementById('q-counter').textContent = `Q${quizCurrentQ+1} / 20`;
+  } else {
+    document.getElementById('q-counter').textContent =
+      `Q${players[0].current+1}/20 · Q${players[1].current+1}/20`;
+  }
+}
+
+function renderPlayer(idx) {
+  const p      = players[idx];
+  const labels = idx===0 ? P1_LABELS : P2_LABELS;
+  const area   = document.getElementById(`play-area-${idx}`);
+
+  if (p.done) {
+    area.innerHTML = `<div class="status-done">// terminé · ${p.score} pts</div>`;
+    return;
+  }
+
+  // En mode quiz : si ce joueur a déjà répondu à la question courante, on affiche "en attente"
+  if (quizMode && quizAnswered[idx]) {
+    const q = quizQuestions[quizCurrentQ];
+    area.innerHTML = `
+      <div class="question-text" style="opacity:0.4">${q.q}</div>
+      <div class="waiting-overlay">⏳ En attente de l'adversaire…</div>`;
+    return;
+  }
+
+  const q = quizMode ? quizQuestions[quizCurrentQ] : p.questions[p.current];
+  questionStartTime[idx] = Date.now();
+  const lvlPts = quizMode ? LEVEL_PTS[quizLevel] : 1;
+  area.innerHTML = `
+    ${quizMode ? `<div class="quiz-mode-tag">Q.${quizCurrentQ+1}/20 · +${lvlPts} pts correct · −1 erreur</div>` : ''}
+    <div class="question-text">${q.q}</div>
+    <div class="options">
+      ${q.opts.map((o,i)=>`
+        <button class="opt-btn" id="opt-${idx}-${i}" onclick="answer(${idx},${i})">
+          <span class="ok">${labels[i]}</span>${o}
+        </button>`).join('')}
+    </div>`;
+}
+
+function getWarriorBonus(playerIdx) {
+  if (!warriorEnabled) return 0;
+  const s = streak[playerIdx];
+  if (s === 10) return 100;
+  if (s === 6)  return 30;
+  if (s === 3)  return 15;
+  return 0;
+}
+
+function showWarriorPopup(playerIdx, bonus) {
+  const board = document.getElementById(`play-area-${playerIdx}`);
+  const rect  = board.getBoundingClientRect();
+  const popup = document.createElement('div');
+  let cls = 'bonus-popup warrior ';
+  if (bonus === 100) cls += 'w-purple';
+  else if (bonus === 30) cls += 'w-red';
+  else cls += 'w-orange';
+  popup.className = cls;
+  const labels = {15:'🔥×3  +15', 30:'🔥×6  +30', 100:'🔥×10  +100'};
+  popup.textContent = labels[bonus] || '+' + bonus;
+  popup.style.left = (rect.left + rect.width / 2 - 60) + 'px';
+  popup.style.top  = (rect.top + 10) + 'px';
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 1100);
+}
+
+function updateStreakBadge(playerIdx) {
+  const s = streak[playerIdx];
+  const area = document.getElementById(`play-area-${playerIdx}`);
+  let badge = area.querySelector('.streak-badge');
+
+  if (!warriorEnabled || s < 2) {
+    if (badge) badge.remove();
+    return;
+  }
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.className = 'streak-badge';
+    area.prepend(badge);
+  }
+  badge.className = 'streak-badge' + (s >= 10 ? ' s10' : s >= 6 ? ' s6' : ' s3');
+  badge.textContent = '🔥 ' + s + ' en série';
+}
+
+function getBonusPoints(playerIdx) {
+  if (!speedEnabled) return 0;
+  const elapsed = (Date.now() - (questionStartTime[playerIdx] || Date.now())) / 1000;
+  if (elapsed <= 2) return 10;
+  if (elapsed <= 5) return 5;
+  return 0;
+}
+
+function showBonusPopup(playerIdx, bonus) {
+  const board = document.getElementById(`play-area-${playerIdx}`);
+  const rect  = board.getBoundingClientRect();
+  const popup = document.createElement('div');
+  popup.className = 'bonus-popup ' + (bonus === 10 ? 'gold' : 'silver');
+  popup.textContent = '+' + bonus;
+  popup.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+  popup.style.top  = (rect.top + 20) + 'px';
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 950);
+}
+
+function answer(playerIdx, choiceIdx) {
+  const p = players[playerIdx];
+  if (p.done || p.locked) return;
+  // En mode quiz : ne pas répondre si déjà répondu à cette question
+  if (quizMode && quizAnswered[playerIdx]) return;
+  p.locked = true;
+
+  const q  = quizMode ? quizQuestions[quizCurrentQ] : p.questions[p.current];
+  const ok = choiceIdx === q.a;
+  let bonus = 0;
+
+  if (ok) {
+    const pts = quizMode ? LEVEL_PTS[quizLevel] : 1;
+    p.score += pts;
+    // Bonus rapidité
+    bonus = getBonusPoints(playerIdx);
+    if (bonus > 0) {
+      p.score += bonus;
+      showBonusPopup(playerIdx, bonus);
+    }
+    // Streak warrior
+    streak[playerIdx]++;
+    const warriorBonus = getWarriorBonus(playerIdx);
+    if (warriorBonus > 0) {
+      p.score += warriorBonus;
+      showWarriorPopup(playerIdx, warriorBonus);
+    }
+    updateStreakBadge(playerIdx);
+  } else {
+    streak[playerIdx] = 0;
+    updateStreakBadge(playerIdx);
+    // −1 en mode quiz
+    if (quizMode) {
+      p.score = Math.max(0, p.score - 1);
+      showMinusPopup(playerIdx);
+    }
+  }
+
+  if (ok || bonus > 0) {
+    const sc = document.getElementById(`bb-score${playerIdx + 1}`);
+    sc.classList.remove('score-bump');
+    void sc.offsetWidth;
+    sc.classList.add('score-bump');
+  }
+
+  // Colorier les boutons
+  for (let i=0; i<q.opts.length; i++) {
+    const b = document.getElementById(`opt-${playerIdx}-${i}`);
+    if (!b) continue;
+    b.disabled = true;
+    if (i===q.a)              b.classList.add('correct');
+    if (i===choiceIdx && !ok) b.classList.add('wrong');
+  }
+
+  updateBattleBar();
+
+  if (quizMode) {
+    // Marquer ce joueur comme ayant répondu
+    quizAnswered[playerIdx] = true;
+    p.locked = false;
+    // Afficher l'état "en attente" pour ce joueur
+    renderPlayer(playerIdx);
+    // Le premier qui répond fait avancer la question pour TOUT LE MONDE immédiatement
+    setTimeout(() => {
+      quizCurrentQ++;
+      quizAnswered = [false, false];
+      players[0].current = quizCurrentQ;
+      players[1].current = quizCurrentQ;
+      if (quizCurrentQ >= TOTAL) {
+        players[0].done = true;
+        players[1].done = true;
+        endGame();
+      } else {
+        renderPlayer(0);
+        renderPlayer(1);
+        updateCounter();
+      }
+    }, 700);
+  } else {
+    setTimeout(()=>{
+      p.current++;
+      p.locked = false;
+      if (p.current >= TOTAL) {
+        p.done = true;
+        renderPlayer(playerIdx);
+        if (players[0].done && players[1].done) endGame();
+      } else {
+        renderPlayer(playerIdx);
+      }
+      updateCounter();
+    }, 650);
+  }
+}
+
+function showMinusPopup(playerIdx) {
+  const board = document.getElementById(`play-area-${playerIdx}`);
+  const rect  = board.getBoundingClientRect();
+  const popup = document.createElement('div');
+  popup.className = 'bonus-popup minus';
+  popup.textContent = '−1';
+  popup.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+  popup.style.top  = (rect.top + 20) + 'px';
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 900);
+}
+
+// Clavier
+document.addEventListener('keydown', e => {
+  if (!gameActive) return;
+  const k = e.key.toLowerCase();
+  if (['a','z','e','r','1','2','3','4'].includes(k)) e.preventDefault();
+  if (k in P1_KEYS) { flash(0, P1_KEYS[k]); answer(0, P1_KEYS[k]); }
+  const n = parseInt(k);
+  if (!isNaN(n) && n>=1 && n<=4) { flash(1, n-1); answer(1, n-1); }
+});
+
+function flash(pi, ci) {
+  const b = document.getElementById(`opt-${pi}-${ci}`);
+  if (!b || b.disabled) return;
+  b.classList.add('flash');
+  setTimeout(()=>b.classList.remove('flash'), 110);
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  gameActive = false;
+
+  const [p1,p2] = players;
+  const total = p1.score + p2.score || 1;
+  const p1Pct = Math.round((p1.score/total)*100);
+  const p2Pct = 100 - p1Pct;
+  const m1 = 10 + (p1Pct/100)*80;
+  const m2 = 100 - m1;
+
+  document.getElementById('res-n1').textContent    = p1.name;
+  document.getElementById('res-n2').textContent    = p2.name;
+  document.getElementById('r-name-0').textContent  = p1.name;
+  document.getElementById('r-name-1').textContent  = p2.name;
+  document.getElementById('r-score-0').textContent = p1.score;
+  document.getElementById('r-score-1').textContent = p2.score;
+
+  setTimeout(()=>{
+    document.getElementById('res-bar-p1').style.width = m1+'%';
+    document.getElementById('res-bar-p2').style.width = m2+'%';
+  }, 300);
+
+  let icon, title, sub;
+  if (p1.score > p2.score)      { icon='🏆'; title=`${p1.name} gagne !`;    sub=`${p1.score} pts contre ${p2.score}`; }
+  else if (p2.score > p1.score) { icon='🏆'; title=`${p2.name} gagne !`;    sub=`${p2.score} pts contre ${p1.score}`; }
+  else                          { icon='🤝'; title='Égalité parfaite !'; sub=`${p1.score} pts chacun`; }
+
+  document.getElementById('res-icon').textContent  = icon;
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-sub').textContent   = sub;
+
+  document.getElementById('game-screen').classList.remove('active');
+  document.getElementById('result-screen').classList.add('active');
+}
+
+function resetGame() {
+  clearInterval(timerInterval);
+  gameActive = false;
+  questionStartTime = {};
+  streak = [0, 0];
+  quizCurrentQ = 0;
+  quizAnswered = [false, false];
+  quizQuestions = [];
+  document.getElementById('result-screen').classList.remove('active');
+  document.getElementById('game-screen').classList.remove('active');
+  document.getElementById('start-screen').style.display = 'block';
+  document.getElementById('timer-display').textContent = '00:00';
+  document.getElementById('timer-display').classList.remove('urgent');
+}
+</script>
+</body>
+</html>
