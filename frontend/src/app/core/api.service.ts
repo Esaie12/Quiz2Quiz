@@ -4,7 +4,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:3000/api';
+  private readonly baseUrl = (import.meta as ImportMeta & { env?: { NG_APP_API_URL?: string } }).env
+    ?.NG_APP_API_URL ?? 'http://localhost:3000/api';
 
   get<T>(path: string) {
     return this.http.get<T>(`${this.baseUrl}${path}`, {

@@ -57,10 +57,11 @@ export class AuthController {
   }
 
   private attachRefreshCookie(res: Response, refreshToken: string) {
+    const secureCookie = process.env.COOKIE_SECURE === 'true';
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       sameSite: 'strict',
-      secure: false,
+      secure: secureCookie,
       maxAge: 7 * 24 * 3600 * 1000,
     });
   }
